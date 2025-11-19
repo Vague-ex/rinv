@@ -1,0 +1,424 @@
+import React, { useState } from 'react';
+import { ChefHat, Package, Calculator, ShoppingCart, FileText, Bell, User, LogOut, Save, Search, Plus, Edit2, Trash2, AlertCircle, CheckCircle, Clock, DollarSign } from 'lucide-react';
+
+const RBISMockup = () => {
+  const [currentView, setCurrentView] = useState('dashboard');
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+
+  // Mock data
+  const lowStockItems = [
+    { name: 'Chicken Breast', current: 5, minimum: 20, unit: 'kg' },
+    { name: 'Garlic', current: 0.5, minimum: 2, unit: 'kg' },
+    { name: 'Olive Oil', current: 1, minimum: 5, unit: 'L' }
+  ];
+
+  const recipes = [
+    { id: 1, name: 'Adobo', servings: 4, cost: 250, ingredients: 8 },
+    { id: 2, name: 'Sinigang', servings: 6, cost: 320, ingredients: 12 },
+    { id: 3, name: 'Lechon Kawali', servings: 4, cost: 450, ingredients: 6 }
+  ];
+
+  const ingredients = [
+    { id: 1, name: 'Chicken Breast', stock: 5, min: 20, unit: 'kg', price: 180, status: 'critical' },
+    { id: 2, name: 'Soy Sauce', stock: 8, min: 5, unit: 'L', price: 120, status: 'good' },
+    { id: 3, name: 'Garlic', stock: 0.5, min: 2, unit: 'kg', price: 200, status: 'critical' },
+    { id: 4, name: 'Pork Belly', stock: 15, min: 10, unit: 'kg', price: 280, status: 'good' },
+    { id: 5, name: 'Tomatoes', stock: 3, min: 5, unit: 'kg', price: 80, status: 'low' }
+  ];
+
+  const getStockColor = (status) => {
+    switch(status) {
+      case 'critical': return 'bg-red-100 text-red-800 border-red-300';
+      case 'low': return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'good': return 'bg-green-100 text-green-800 border-green-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
+
+  const Sidebar = () => (
+    <div className="w-64 bg-gradient-to-b from-blue-900 to-blue-800 text-white h-screen flex flex-col">
+      <div className="p-6 border-b border-blue-700">
+        <div className="flex items-center space-x-3">
+          <ChefHat className="w-8 h-8" />
+          <div>
+            <h1 className="text-xl font-bold">RBIS</h1>
+            <p className="text-xs text-blue-200">Recipe & Inventory System</p>
+          </div>
+        </div>
+      </div>
+      
+      <nav className="flex-1 p-4 space-y-2">
+        {[
+          { id: 'dashboard', icon: FileText, label: 'Dashboard' },
+          { id: 'recipes', icon: ChefHat, label: 'Recipes' },
+          { id: 'inventory', icon: Package, label: 'Inventory' },
+          { id: 'calculator', icon: Calculator, label: 'Calculations' },
+          { id: 'purchase', icon: ShoppingCart, label: 'Purchase Orders' },
+          { id: 'reports', icon: FileText, label: 'Reports' }
+        ].map(item => (
+          <button
+            key={item.id}
+            onClick={() => setCurrentView(item.id)}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+              currentView === item.id ? 'bg-blue-700 shadow-lg' : 'hover:bg-blue-800'
+            }`}
+          >
+            <item.icon className="w-5 h-5" />
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+      
+      <div className="p-4 border-t border-blue-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <User className="w-8 h-8 bg-blue-700 p-1.5 rounded-full" />
+            <div className="text-sm">
+              <p className="font-semibold">Manager</p>
+              <p className="text-xs text-blue-200">Juan Dela Cruz</p>
+            </div>
+          </div>
+          <button className="hover:bg-blue-700 p-2 rounded-lg">
+            <LogOut className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const TopBar = () => (
+    <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <div className="flex-1 max-w-xl">
+        <div className="relative">
+          <Search className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search recipes, ingredients, or orders..."
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+      </div>
+      
+      <div className="flex items-center space-x-4 ml-6">
+        <button className="relative hover:bg-gray-100 p-2 rounded-lg">
+          <Bell className="w-6 h-6 text-gray-600" />
+          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+        </button>
+        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+          <Save className="w-4 h-4" />
+          <span>Backup Now</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const DashboardView = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Recipes</p>
+              <p className="text-3xl font-bold text-gray-900">87</p>
+            </div>
+            <ChefHat className="w-12 h-12 text-blue-500 opacity-20" />
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Ingredients</p>
+              <p className="text-3xl font-bold text-gray-900">156</p>
+            </div>
+            <Package className="w-12 h-12 text-green-500 opacity-20" />
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Low Stock Items</p>
+              <p className="text-3xl font-bold text-red-600">{lowStockItems.length}</p>
+            </div>
+            <AlertCircle className="w-12 h-12 text-red-500 opacity-20" />
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Inventory Value</p>
+              <p className="text-3xl font-bold text-gray-900">₱45,230</p>
+            </div>
+            <DollarSign className="w-12 h-12 text-yellow-500 opacity-20" />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-gray-900">Critical Low Stock Alerts</h3>
+            <AlertCircle className="w-5 h-5 text-red-500" />
+          </div>
+          <div className="space-y-3">
+            {lowStockItems.map((item, idx) => (
+              <div key={idx} className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div>
+                  <p className="font-semibold text-gray-900">{item.name}</p>
+                  <p className="text-sm text-gray-600">Current: {item.current} {item.unit} / Min: {item.minimum} {item.unit}</p>
+                </div>
+                <button className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">
+                  Order Now
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Activity</h3>
+          <div className="space-y-3">
+            <div className="flex items-start space-x-3 p-3 border-l-4 border-blue-500 bg-blue-50 rounded">
+              <Clock className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold">Recipe Added</p>
+                <p className="text-xs text-gray-600">Chicken Curry - 2 hours ago</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 p-3 border-l-4 border-green-500 bg-green-50 rounded">
+              <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold">Stock Updated</p>
+                <p className="text-xs text-gray-600">Received PO #1025 - 4 hours ago</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 p-3 border-l-4 border-orange-500 bg-orange-50 rounded">
+              <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold">Dish Prepared</p>
+                <p className="text-xs text-gray-600">Adobo (15 servings) - 5 hours ago</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const RecipesView = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">Recipe Management</h2>
+        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+          <Plus className="w-4 h-4" />
+          <span>Add New Recipe</span>
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Recipe Name</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Servings</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ingredients</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Cost per Serving</th>
+              <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {recipes.map((recipe) => (
+              <tr key={recipe.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4">
+                  <div className="flex items-center space-x-3">
+                    <ChefHat className="w-8 h-8 text-blue-500 bg-blue-50 p-1.5 rounded" />
+                    <span className="font-semibold text-gray-900">{recipe.name}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-gray-600">{recipe.servings}</td>
+                <td className="px-6 py-4 text-gray-600">{recipe.ingredients} items</td>
+                <td className="px-6 py-4 text-gray-900 font-semibold">₱{(recipe.cost / recipe.servings).toFixed(2)}</td>
+                <td className="px-6 py-4 text-right">
+                  <div className="flex items-center justify-end space-x-2">
+                    <button className="p-2 hover:bg-blue-100 rounded text-blue-600">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button className="p-2 hover:bg-red-100 rounded text-red-600">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const InventoryView = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">Inventory Management</h2>
+        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+          <Plus className="w-4 h-4" />
+          <span>Add Ingredient</span>
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ingredient</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Current Stock</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Minimum Stock</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Unit Price</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+              <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {ingredients.map((item) => (
+              <tr key={item.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4">
+                  <div className="flex items-center space-x-3">
+                    <Package className="w-8 h-8 text-gray-500 bg-gray-100 p-1.5 rounded" />
+                    <span className="font-semibold text-gray-900">{item.name}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-gray-900 font-semibold">{item.stock} {item.unit}</td>
+                <td className="px-6 py-4 text-gray-600">{item.min} {item.unit}</td>
+                <td className="px-6 py-4 text-gray-900">₱{item.price}</td>
+                <td className="px-6 py-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStockColor(item.status)}`}>
+                    {item.status === 'critical' ? 'Critical' : item.status === 'low' ? 'Low Stock' : 'Good'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <div className="flex items-center justify-end space-x-2">
+                    <button className="p-2 hover:bg-blue-100 rounded text-blue-600">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button className="p-2 hover:bg-green-100 rounded text-green-600">
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const CalculatorView = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900">Recipe Calculations</h2>
+      
+      <div className="grid grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2">
+            <Calculator className="w-5 h-5 text-blue-600" />
+            <span>Forward Calculation</span>
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">Calculate ingredients needed for planned dishes</p>
+          
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Select Recipes</label>
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option>Choose recipes...</option>
+                <option>Adobo</option>
+                <option>Sinigang</option>
+                <option>Lechon Kawali</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Number of Servings</label>
+              <input 
+                type="number" 
+                placeholder="Enter servings" 
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <button className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2">
+              <Calculator className="w-4 h-4" />
+              <span>Calculate Ingredients</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2">
+            <Package className="w-5 h-5 text-green-600" />
+            <span>Reverse Calculation</span>
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">Find dishes you can prepare with available ingredients</p>
+          
+          <div className="space-y-3">
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-sm text-gray-600 mb-2">Current Inventory Status:</p>
+              <p className="text-2xl font-bold text-gray-900">156 Ingredients</p>
+              <p className="text-sm text-green-600 font-semibold">Ready to analyze</p>
+            </div>
+            
+            <button className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center space-x-2">
+              <Search className="w-4 h-4" />
+              <span>Find Possible Dishes</span>
+            </button>
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Tip:</strong> This will show you all dishes you can prepare with your current stock levels.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
+      
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <TopBar />
+        
+        <div className="flex-1 overflow-auto">
+          <div className="p-6">
+            {currentView === 'dashboard' && <DashboardView />}
+            {currentView === 'recipes' && <RecipesView />}
+            {currentView === 'inventory' && <InventoryView />}
+            {currentView === 'calculator' && <CalculatorView />}
+            {currentView === 'purchase' && (
+              <div className="bg-white p-12 rounded-lg shadow-sm border border-gray-200 text-center">
+                <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Purchase Orders</h3>
+                <p className="text-gray-600">Purchase order management interface</p>
+              </div>
+            )}
+            {currentView === 'reports' && (
+              <div className="bg-white p-12 rounded-lg shadow-sm border border-gray-200 text-center">
+                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Reports & Analytics</h3>
+                <p className="text-gray-600">Inventory valuation, recipe costing, and stock movement reports</p>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="bg-white border-t border-gray-200 px-6 py-3 flex items-center justify-between text-sm text-gray-600">
+          <div className="flex items-center space-x-4">
+            <span>RBIS v1.0</span>
+            <span>•</span>
+            <span>Last backup: Today, 9:30 AM</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-green-500 round
